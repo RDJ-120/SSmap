@@ -5,6 +5,24 @@ clear
 rows=$(( ($(tput lines) / 2) - 4 ))
 cols=$(( ($(tput cols) / 2) - 12 ))
 
+
+if [[ -z $(command -v nmap) ]]; then
+	printf "\e[38;2;255;0;0mNmap Tool Not Found\n\e[38;5;83mWant To Download it?[ Y - N ]:  " && read err
+	printf "\e[0m"
+	if [[ ${err,,} == "y" ]]; then
+		clear
+		if [[ $HOME == "/data/data/com.termux/files/home" ]]; then
+			pkg install nmap
+		else
+			sudo apt install nmap -y || sudo dnf install nmap -y || sudo pacman -S nmap --noconfirm
+		fi
+	else
+		clear
+		printf "\e[38;5;83mPlease downlaod nmap and use it again..."
+		exit 1
+	fi
+fi
+clear
 printf "\e[38;5;120mWant one IP or All Network?[ O - A ]:  " && read ans
 
 if [[ ${ans,,} == "a" ]]; then
@@ -20,11 +38,11 @@ clear
 
 if [[ -z "$ip" ]]; then
 	printf "\e[38;2;255;0;0mERROR: \e[38;5;160mNo IP Entered.\n"
-	exit 0
+	exit 1
 fi
 
 allsimple() {
-	local text=$(nmap -F 192.168.1.1/24)
+	local text=$(nmap $ip)
 	local text=$(echo "$text" | sed -E '/Starting Nmap/d')
 	readarray -d '' nmaphosts < <(awk -v RS='Nmap scan report for ' 'NF { printf "%s\0", "Nmap scan report for " $0}' <<< "$text")
 	for one in "${nmaphosts[@]}"; do
@@ -50,7 +68,7 @@ allbetter() {
 
 	printf "\e[${cols}C\e[${rows}B\e[38;5;83mMay take long time... please wait\e[0m"
 	tput civis
-	text=$(nmap -sV 192.168.1.1/24)
+	text=$(nmap -sV $ip)
 	tput cnorm
 	clear
 
@@ -89,7 +107,7 @@ allbetter() {
 	exit 0
 }	
 simple() {
-
+	tput civis
 	local res1="$(nmap $ip 2>&1)"
 	tput cnorm
 	clear
@@ -159,7 +177,6 @@ if [[ "${answer,,}" == "y" ]]; then
 	if [[ ${ans,,} == "a" ]]; then
 		allsimple
 	else
-		tput civis
 		printf "\e[${cols}C\e[${rows}B\e[38;5;83mWe are scanning... please wait\e[0m"
 		simple
 	fi
