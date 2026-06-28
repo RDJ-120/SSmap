@@ -51,7 +51,7 @@ typeans=$(gum confirm --negative="Single IP" --affirmative="All Network" "What W
 clear
 if [[ ${typeans} == "All Network" ]]; then
 	printf "\e[38;2;255;255;0mWARNING: Be careful and put only All network format"
-	sleep 5
+	sleep 2
 fi
 
 clear
