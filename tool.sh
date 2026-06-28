@@ -5,27 +5,51 @@ clear
 rows=$(( ($(tput lines) / 2) - 4 ))
 cols=$(( ($(tput cols) / 2) - 12 ))
 
+clear
 
-if [[ -z $(command -v nmap) ]]; then
-	printf "\e[38;2;255;0;0mNmap Tool Not Found\n\e[38;5;83mWant To Download it?[ Y - N ]:  " && read err
+if [[ -z $(command -v gum) ]]; then
+	printf "\e[38;2;255;0;0mGum Tool Not Found\n\e[38;5;83mWant To Download it?[ Y - N ]:  " && read err
 	printf "\e[0m"
+	clear
 	if [[ ${err,,} == "y" ]]; then
 		clear
 		if [[ $HOME == "/data/data/com.termux/files/home" ]]; then
-			pkg install nmap
+			pkg install gum -y
+		else
+			sudo apt install gum -y || sudo dnf install gum -y || sudo pacman -S gum --noconfirm
+		fi
+		hash -r
+	else
+		clear
+		printf "\e[38;5;83mPlease downlaod gum and use it again..."
+		exit 1
+	fi
+fi
+
+clear
+
+if [[ -z $(command -v nmap) ]]; then
+	printf "\e[38;2;255;0;0mNmap Tool Not Found\n\e[0m"
+	if gum confirm --negative="Exit Tool" --affirmative="Download it" "What Will You Do About Nmap?" --selected.background="4" --prompt.foreground 33; then
+		clear
+		if [[ $HOME == "/data/data/com.termux/files/home" ]]; then
+			pkg install nmap -y
 		else
 			sudo apt install nmap -y || sudo dnf install nmap -y || sudo pacman -S nmap --noconfirm
 		fi
 	else
-		clear
 		printf "\e[38;5;83mPlease downlaod nmap and use it again..."
 		exit 1
 	fi
 fi
-clear
-printf "\e[38;5;120mWant one IP or All Network?[ O - A ]:  " && read ans
 
-if [[ ${ans,,} == "a" ]]; then
+clear
+
+typeans=$(gum confirm --negative="Single IP" --affirmative="All Network" "What Will You Scan?" --show-output --selected.background="4" --prompt.foreground 33 | sed 's/What Will You Scan? //')
+
+
+clear
+if [[ ${typeans} == "All Network" ]]; then
 	printf "\e[38;2;255;255;0mWARNING: Be careful and put only All network format"
 	sleep 5
 fi
@@ -42,7 +66,14 @@ if [[ -z "$ip" ]]; then
 fi
 
 allsimple() {
-	local text=$(nmap $ip)
+	local COLUMNS=$(( ($(tput cols) / 2) - 8 ))
+	local LINES=$(( $(tput lines) / 2 ))
+	tput cup $LINES $COLUMNS
+
+	tput civis
+	local text="$(gum spin --spinner dot --spinner.foreground="83" --title.foreground="82" --title "We Are Scanning, please Wait" -- sh -c 'nmap "'"${ip}"'"')"
+	tput cnorm
+	clear
 	local text=$(echo "$text" | sed -E '/Starting Nmap/d')
 	readarray -d '' nmaphosts < <(awk -v RS='Nmap scan report for ' 'NF { printf "%s\0", "Nmap scan report for " $0}' <<< "$text")
 	for one in "${nmaphosts[@]}"; do
@@ -63,12 +94,12 @@ allsimple() {
 }
 
 allbetter() {
-	local rows=$(( ($(tput lines) / 2) - 4 ))
-	local cols=$(( ($(tput cols) / 2) - 16 ))
+	local COLUMNS=$(( ($(tput cols) / 2) - 8 ))
+	local LINES=$(( $(tput lines) / 2 ))
+	tput cup $LINES $COLUMNS
 
-	printf "\e[${cols}C\e[${rows}B\e[38;5;83mMay take long time... please wait\e[0m"
 	tput civis
-	text=$(nmap -sV $ip)
+	local text="$(gum spin --spinner dot --spinner.foreground="83" --title.foreground="82" --title "We Are Scanning, please Wait" -- sh -c 'nmap -sV "'"${ip}"'"')"
 	tput cnorm
 	clear
 
@@ -107,8 +138,12 @@ allbetter() {
 	exit 0
 }	
 simple() {
+	local LINES=$(( $(tput lines) / 2 ))
+	local COLUMNS=$(( ($(tput cols) / 2) - 8 ))
+	tput cup $LINES $COLUMNS
+
 	tput civis
-	local res1="$(nmap $ip 2>&1)"
+	local res1="$(gum spin --spinner dot --spinner.foreground="83" --title.foreground="82" --title "We Are Scanning, please Wait" -- sh -c 'nmap "'"${ip}"'"')"
 	tput cnorm
 	clear
 	if [[ "$res1" == *"seems down"* ]]; then
@@ -131,11 +166,14 @@ simple() {
 }
 
 better() {
-	printf "\e[${cols}C\e[${rows}B\e[38;5;83mWe are scanning... please wait\e[0m"
-	
+	local LINES=$(( $(tput lines) / 2 ))
+	local COLUMNS=$(( ($(tput cols) / 2) - 8 ))
+	tput cup $LINES $COLUMNS
+
 	tput civis
-	local res1="$(nmap -sV "${ip}")"
+	local res1="$(gum spin --spinner dot --spinner.foreground="83" --title.foreground="82" --title "We Are Scanning, please Wait" -- sh -c 'nmap -sV "'"${ip}"'"')"
 	tput cnorm
+
 	clear
 	if [[ "$res1" == *"seems down"* ]]; then
 		printf "\e[38;2;255;0;0mERROR: \e[38;5;160mThe IP is dead.\e[0m\n"
@@ -171,19 +209,21 @@ better() {
 	exit 0
 }
 clear
-printf "\e[38;5;120mWant surface info only?[ Y - N ]:  \e[38;5;123m" && read answer
+answer=$(gum confirm --negative="Deep Scan" --affirmative="Fast Scan" "What Type of Scanning?" --show-output --selected.background="4" --prompt.foreground 33 | sed 's/What Type of Scanning? //')
 clear
-if [[ "${answer,,}" == "y" ]]; then
-	if [[ ${ans,,} == "a" ]]; then
+if [[ "${answer}" == "Fast Scan" ]]; then
+	if [[ ${typeans} == "All Network" ]]; then
 		allsimple
 	else
-		printf "\e[${cols}C\e[${rows}B\e[38;5;83mWe are scanning... please wait\e[0m"
 		simple
 	fi
-else
-	if [[ ${ans,,} == "a" ]]; then
+elif [[ ${answer} == "Deep Scan" ]]; then
+	if [[ ${typeans} == "All Network" ]]; then
 		allbetter
 	else
 		better
 	fi
+else
+	printf "\e[38;2;255;0;0mError: Unknown Choice"
+	exit 1
 fi
