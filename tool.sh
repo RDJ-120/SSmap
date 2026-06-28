@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+#doing something
 clear
 
 rows=$(( ($(tput lines) / 2) - 4 ))
