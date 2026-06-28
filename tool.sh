@@ -74,17 +74,17 @@ allbetter() {
 
 	local text=$(echo "$text" | sed -E '/Starting Nmap/d')
 	readarray -d '' nmaphosts < <(awk -v RS='Nmap scan report for ' 'NF { printf "%s\0", "Nmap scan report for " $0}' <<< "$text")
-	for one in "${nmaphosts[@]}"; do
-		local txt=$(echo "$one" | head -n 1 | sed 's/Nmap/SSmap/')
+	for one2 in "${nmaphosts[@]}"; do
+		local txt=$(echo "$one2" | head -n 1 | sed 's/Nmap/SSmap/')
 		printf "\e[38;5;46m$txt\n"
-		if [[ "$one" == *"seems down"* ]]; then
+		if [[ "$one2" == *"seems down"* ]]; then
 			printf "\e[38;2;255;0;0mERROR: \e[38;5;160mThe IP is dead.\e[0m\n\n"
-		elif [[ "$one" == *"resolve"* ]]; then
+		elif [[ "$one2" == *"resolve"* ]]; then
 			printf "\e[38;2;255;0;0mERROR: \e[38;5;160mBad IP pattern\e[0m\n\n"
-		elif [[ "$one" != *"PORT"* ]]; then
+		elif [[ "$one2" != *"PORT"* ]]; then
 			printf "\e[38;5;124mNo Open Or Filtered Ports Found.\e[0m\n\n"
 		else
-			local res=$(echo "$one" | awk '/PORT/,/Nmap/' | sed -E '/PORT/d; /Nmap/d; /^[ +]*$/d')
+			local res=$(echo "$one2" | awk '/PORT/,/Nmap/' | sed -E '/PORT/d; /Nmap/d; /^[ +]*$/d')
 			local info=$(echo "$res" | grep --color=never "Service Info" | sed 's/Service Info: //')
 			local final=$(echo "$res" | sed -E '/Service/d')
 			IFS=";" read -ra ele <<< "$info"
@@ -92,8 +92,8 @@ allbetter() {
 			printf "\e[38;5;87m$final\n\e[0m\n\n"
 			printf "\e[38;5;120mService Info:\n"
 
-			for one in "${ele[@]}"; do
-				local onee=$(echo $one | sed 's/^[ ]+//')
+			for one4 in "${ele[@]}"; do
+				local onee=$(echo $one4 | sed 's/^[ ]+//')
 				printf "\e[38;5;51m$onee\n"
 			done
 
@@ -159,8 +159,8 @@ better() {
 	printf "\e[38;5;51m$final\n\n"
 	printf "\e[38;5;120mService Info:\n"
 	
-	for one in "${ele[@]}"; do
-		local onee=$(echo $one | sed 's/^[ ]+//')
+	for one3 in "${ele[@]}"; do
+		local onee=$(echo $one3 | sed 's/^[ ]+//')
 		printf "\e[38;5;51m$onee\n"
 	done
 
